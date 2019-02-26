@@ -1,5 +1,6 @@
 import {Component, OnInit} from '@angular/core';
-import {FormArray, FormControl, FormGroup, Validators} from '@angular/forms';
+import {AbstractControl, FormArray, FormControl, FormGroup, ValidationErrors, Validators} from '@angular/forms';
+import {Observable} from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -11,16 +12,27 @@ export class AppComponent implements OnInit {
   signupForm: FormGroup;
   forbiddenUsernames = ['Chris', 'Anna'];
 
+  constructor() {}
+
   ngOnInit(): void {
     this.signupForm = new FormGroup({
-      'username': new FormControl(null, [Validators.required, this.forbiddenNames.bind(this)]),
-      'email': new FormControl(null, [Validators.required, Validators.email]),
+      'userData': new FormGroup({
+        'username': new FormControl(
+          null,
+          [Validators.required, this.forbiddenNames.bind(this)]
+        ),
+        'email': new FormControl(
+          null,
+          [Validators.required, Validators.email],
+          this.forbiddenEmails
+        )
+      }),
       'gender': new FormControl('male'),
       'hobbies': new FormArray([])
     });
   }
 
-  onSubmit() {
+  onSubmit(): void {
     console.log(this.signupForm);
   }
 
@@ -29,10 +41,25 @@ export class AppComponent implements OnInit {
     (<FormArray>this.signupForm.get('hobbies')).push(control);
   }
 
-  forbiddenNames(control: FormControl): {[s: string]: boolean} {
+  forbiddenNames(control: AbstractControl): ValidationErrors | null {
     if (this.forbiddenUsernames.indexOf(control.value) > -1) {
       return {'nameIsForbidden': true};
     }
     return null;
+  }
+
+  forbiddenEmails(control: AbstractControl): Promise<ValidationErrors | null> | Observable<ValidationErrors | null> {
+    return new Promise<ValidationErrors | null>((resolve, reject) => {
+      setTimeout(() => {
+        console.log('control', control);
+        if (control.value === 'test@test.com') {
+          console.log('control.value 1', control.value);
+          resolve({'emailIsForbidden': true});
+        } else {
+          console.log('control.value 2', control.value);
+          resolve(null);
+        }
+      }, 2500);
+    });
   }
 }
